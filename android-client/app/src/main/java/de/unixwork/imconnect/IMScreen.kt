@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -166,12 +167,16 @@ fun ConnectionItem(name: String) {
 @Composable
 fun ConnectScreen(
     navController: NavHostController = rememberNavController(),
-    imViewModel: IMViewModel = viewModel()
+    imViewModel: IMViewModel = viewModel(),
+    modifier: Modifier = Modifier
 ) {
     var host by remember { mutableStateOf(TextFieldValue("")) }
     var port by remember { mutableStateOf(TextFieldValue(""))}
 
-    Column {
+    Column(
+        modifier = Modifier.padding(5.dp, 5.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
         Text(text = "Host")
         TextField(
             value = host,
