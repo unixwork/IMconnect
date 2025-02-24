@@ -68,6 +68,7 @@ import de.unixwork.imconnect.IMViewModel
 enum class IMScreen() {
     Start,
     Connect,
+    Conversations,
     Chat
 }
 
@@ -136,6 +137,9 @@ fun IMApp(
             composable(IMScreen.Connect.name) {
                 ConnectScreen()
             }
+            composable(IMScreen.Conversations.name) {
+                ConversationsScreen(navController = navController)
+            }
             composable(IMScreen.Chat.name) {
                 ChatScreen()
             }
@@ -165,7 +169,7 @@ fun ConnectionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
-                onClick = { navController.navigate(IMScreen.Chat.name) },
+                onClick = { navController.navigate(IMScreen.Conversations.name) },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple() // deprecated: use ripple()
             )
@@ -216,6 +220,40 @@ fun ConnectScreen(
         }
     }
 }
+
+@Composable
+fun ConversationsScreen(
+    navController: NavHostController = rememberNavController(),
+    imViewModel: IMViewModel = viewModel(),
+    modifier: Modifier = Modifier
+) {
+    val testContacts = arrayOf("Alice", "Bob") // sample data
+
+    LazyColumn {
+        items(testContacts) { contact ->
+            ConversationItem(contact = contact, navController)
+        }
+    }
+}
+
+@Composable
+fun ConversationItem(contact: String, navController: NavHostController = rememberNavController()) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                onClick = { navController.navigate(IMScreen.Chat.name) },
+                interactionSource = remember { MutableInteractionSource() },
+                indication = rememberRipple() // deprecated: use ripple()
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = contact, fontSize = 18.sp)
+    }
+}
+
 
 @Composable
 fun ChatScreen(
