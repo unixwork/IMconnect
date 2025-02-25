@@ -59,9 +59,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 
 import de.unixwork.imconnect.IMViewModel
 
@@ -99,6 +101,8 @@ fun IMAppBar(
 fun IMApp(
     navController: NavHostController = rememberNavController(),
 ) {
+    val imViewModel: IMViewModel = viewModel()
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -130,18 +134,32 @@ fun IMApp(
             composable(IMScreen.Start.name) {
                 Column {
                     val testList = listOf("Connection 1", "Connection 2")
-                    ConnectionsList(navController = navController, connections = testList)
+                    ConnectionsList(navController = navController, imViewModel = imViewModel)
                 }
 
             }
-            composable(IMScreen.Connect.name) {
-                ConnectScreen()
+            composable(
+                IMScreen.Connect.name
+            ) {
+                ConnectScreen(navController = navController, imViewModel = imViewModel)
             }
-            composable(IMScreen.Conversations.name) {
-                ConversationsScreen(navController = navController)
+            composable(
+                IMScreen.Conversations.name + "/{connection}",
+                arguments = listOf(navArgument("connection") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val connection = backStackEntry.arguments?.getString("connection") ?: ""
+                ConversationsScreen(navController = navController, connection = connection, imViewModel = imViewModel)
             }
-            composable(IMScreen.Chat.name) {
-                ChatScreen()
+            composable(
+                IMScreen.Chat.name + "/{connection}/{conversation}",
+                arguments = listOf(
+                    navArgument("connection") { type = NavType.StringType },
+                    navArgument("conversation") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val connection = backStackEntry.arguments?.getString("connection") ?: ""
+                val conversation = backStackEntry.arguments?.getString("conversation") ?: ""
+                ChatScreen(navController = navController, connection = connection, conversation = conversation, imViewModel = imViewModel)
             }
         }
     }
@@ -151,11 +169,11 @@ fun IMApp(
 @Composable
 fun ConnectionsList(
     navController: NavHostController = rememberNavController(),
-    connections: List<String>
+    imViewModel: IMViewModel
 ) {
     LazyColumn {
-        items(connections) { conn ->
-            ConnectionItem(navController = navController, name = conn)
+        items(imViewModel.connections) { conn ->
+            ConnectionItem(navController = navController, name = conn.name)
         }
     }
 }
@@ -169,7 +187,7 @@ fun ConnectionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
-                onClick = { navController.navigate(IMScreen.Conversations.name) },
+                onClick = { navController.navigate(IMScreen.Conversations.name + "/" + name) },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple() // deprecated: use ripple()
             )
@@ -184,11 +202,12 @@ fun ConnectionItem(
 @Composable
 fun ConnectScreen(
     navController: NavHostController = rememberNavController(),
-    imViewModel: IMViewModel = viewModel(),
+    imViewModel: IMViewModel,
     modifier: Modifier = Modifier
 ) {
     var host by remember { mutableStateOf(TextFieldValue("")) }
-    var port by remember { mutableStateOf(TextFieldValue(""))}
+    var port by remember { mutableStateOf(TextFieldValue("")) }
+
 
     Column(
         modifier = Modifier.padding(5.dp, 5.dp),
@@ -224,25 +243,38 @@ fun ConnectScreen(
 @Composable
 fun ConversationsScreen(
     navController: NavHostController = rememberNavController(),
-    imViewModel: IMViewModel = viewModel(),
+    imViewModel: IMViewModel,
+    connection: String,
     modifier: Modifier = Modifier
 ) {
-    val testContacts = arrayOf("Alice", "Bob") // sample data
+    val conn = imViewModel.getConnection(connection)
+    if (conn == null) {
+        return
+    }
 
     LazyColumn {
-        items(testContacts) { contact ->
-            ConversationItem(contact = contact, navController)
+        items(conn.conversations) { conv ->
+            ConversationItem(
+                connection = connection,
+                contact = conv.name,
+                imViewModel = imViewModel,
+                navController = navController)
         }
     }
 }
 
 @Composable
-fun ConversationItem(contact: String, navController: NavHostController = rememberNavController()) {
+fun ConversationItem(
+    connection: String,
+    contact: String,
+    imViewModel: IMViewModel,
+    navController: NavHostController = rememberNavController()
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(
-                onClick = { navController.navigate(IMScreen.Chat.name) },
+                onClick = { navController.navigate(IMScreen.Chat.name + "/" + connection + "/" + contact)  },
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple() // deprecated: use ripple()
             )
@@ -258,13 +290,23 @@ fun ConversationItem(contact: String, navController: NavHostController = remembe
 @Composable
 fun ChatScreen(
     navController: NavHostController = rememberNavController(),
-    imViewModel: IMViewModel = viewModel(),
+    imViewModel: IMViewModel,
+    connection: String,
+    conversation: String,
     modifier: Modifier = Modifier
 ) {
     var textInput by remember { mutableStateOf("") }
 
+    val conn = imViewModel.getConnection(connection)
+    if (conn == null) {
+        return
+    }
+    val conv = conn.getConversation(conversation)
+    if(conv == null) {
+        return
+    }
+
     val testMsgs = arrayOf("hello", "hi", "how are you") // sample data
-    var send = true // test
 
     Column(
         modifier = Modifier.fillMaxSize().padding(8.dp)
@@ -272,9 +314,8 @@ fun ChatScreen(
         LazyColumn(
             modifier = Modifier.weight(1f)
         ) {
-            items(testMsgs) { txt ->
-                ChatItem(text = txt, send = send)
-                send = !send // test
+            items(conv.messages) { msg ->
+                ChatItem(text = msg.text, incoming = msg.incoming)
             }
         }
 
@@ -293,17 +334,17 @@ fun ChatScreen(
 }
 
 @Composable
-fun ChatItem(text: String, send: Boolean) {
+fun ChatItem(text: String, incoming: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth(),
-        horizontalArrangement = if (send) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End
     ) {
         Box(
             modifier = Modifier
                 .padding(8.dp)
                 .background(
-                    if (send) Color.Blue else Color.Gray,
+                    if (incoming) Color.Gray else Color.Blue,
                     shape = RoundedCornerShape(12.dp)
                 )
                 .padding(12.dp)
