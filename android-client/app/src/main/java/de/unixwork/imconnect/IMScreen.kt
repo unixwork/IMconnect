@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material.icons.Icons
@@ -45,6 +47,7 @@ import de.unixwork.imconnect.ui.theme.IMconnectTheme
 
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +55,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -296,6 +300,7 @@ fun ChatScreen(
     modifier: Modifier = Modifier
 ) {
     var textInput by remember { mutableStateOf("") }
+    val listState = rememberLazyListState()
 
     val conn = imViewModel.getConnection(connection)
     if (conn == null) {
@@ -312,6 +317,7 @@ fun ChatScreen(
         modifier = Modifier.fillMaxSize().padding(8.dp)
     ) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.weight(1f)
         ) {
             items(conv.messages) { msg ->
@@ -326,7 +332,15 @@ fun ChatScreen(
             TextField(
                 value = textInput,
                 modifier = Modifier.fillMaxWidth(),
-                onValueChange = {}
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(
+                    onSend = {
+                        // test input
+                        conv.addMessage(textInput, false)
+                        textInput = ""
+                    }
+                ),
+                onValueChange = { textInput = it }
             )
         }
     }

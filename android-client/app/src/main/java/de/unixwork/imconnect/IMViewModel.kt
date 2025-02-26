@@ -1,6 +1,7 @@
 package de.unixwork.imconnect
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -35,8 +36,8 @@ class IMViewModel : ViewModel() {
 }
 
 class Connection(connectionName: String) {
-    var name: String = connectionName
-    var conversations: MutableList<Conversation> = mutableListOf()
+    var name: String by mutableStateOf(connectionName)
+    var conversations = mutableStateListOf<Conversation>()
 
     fun addConversation(conversation: Conversation) {
         conversations.add(conversation)
@@ -48,8 +49,8 @@ class Connection(connectionName: String) {
 }
 
 class Conversation(conversationName: String) {
-    var name: String = conversationName
-    var messages: MutableList<Message> = mutableListOf()
+    var name: String by mutableStateOf(conversationName)
+    var messages = mutableStateListOf<Message>()
 
     fun addMessage(text: String, incoming: Boolean) {
         var msg = Message()
@@ -60,6 +61,6 @@ class Conversation(conversationName: String) {
 }
 
 class Message {
-    var incoming: Boolean = false
-    var text: String = ""
+    var incoming by mutableStateOf(false)
+    var text by mutableStateOf("")
 }
