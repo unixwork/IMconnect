@@ -33,6 +33,11 @@ class IMViewModel : ViewModel() {
     fun getConnection(name: String): Connection? {
         return connections.find { conn -> conn.name.equals(name) }
     }
+
+    fun newConnection(host: String, port: String) {
+        val conn = Connection(host)
+        connections.add(conn)
+    }
 }
 
 class Connection(connectionName: String) {

@@ -238,7 +238,10 @@ fun ConnectScreen(
                 }
             }
         )
-        Button(onClick = {}) {
+        Button(onClick = {
+            imViewModel.newConnection(host.text, port.text)
+            navController.navigate("${IMScreen.Conversations.name}/${host.text}")
+        }) {
             Text(text = "Connect")
         }
     }
