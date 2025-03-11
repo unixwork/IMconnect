@@ -259,6 +259,10 @@ fun ConversationsScreen(
         return
     }
 
+    if(!conn.running) {
+        imViewModel.connect(conn)
+    }
+
     LazyColumn {
         items(conn.conversations) { conv ->
             ConversationItem(
