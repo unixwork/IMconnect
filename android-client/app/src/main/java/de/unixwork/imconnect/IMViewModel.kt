@@ -52,7 +52,6 @@ class IMViewModel(application: Application) : AndroidViewModel(application) {
 class Connection(connectionName: String) {
     var name: String by mutableStateOf(connectionName)
     var conversations = mutableStateListOf<Conversation>()
-    var running: Boolean by mutableStateOf(false)
 
     fun addConversation(conversation: Conversation) {
         conversations.add(conversation)
@@ -60,14 +59,6 @@ class Connection(connectionName: String) {
 
     fun getConversation(name: String): Conversation? {
         return conversations.find { conv -> conv.name.equals(name) }
-    }
-
-    fun connect(app: Application) {
-        val serviceIntent = Intent(app, ConnectionService::class.java).apply {
-            putExtra("host", name)
-            putExtra("port", 5080)
-        }
-        app.startService(serviceIntent)
     }
 }
 

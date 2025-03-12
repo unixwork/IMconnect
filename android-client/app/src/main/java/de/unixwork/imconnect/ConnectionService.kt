@@ -2,26 +2,38 @@ package de.unixwork.imconnect
 
 import android.app.Service
 import android.content.Intent
+import android.os.Handler
 import android.os.IBinder
-import java.net.Socket
+import android.os.Looper
+import android.os.Messenger
+import android.util.Log
+
 
 class ConnectionService : Service() {
-    var host: String? = null
-    var port: Int = 5080
+    companion object {
+        var isRunning: Boolean = false
+    }
 
-    var ioThread: Thread? = null
+    class MessageHandler : Handler(Looper.getMainLooper()) {
+        override fun handleMessage(msg: android.os.Message) {
+
+        }
+    }
+
+    final val messenger = Messenger(MessageHandler())
 
     override fun onCreate() {
         super.onCreate()
+        isRunning = true
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        isRunning = false
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        host = intent?.getStringExtra("host")
-        port = intent?.getIntExtra("port", port) ?: port
-
-
-
-        return START_STICKY
+                return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
