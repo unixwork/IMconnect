@@ -43,9 +43,7 @@ class IMViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun connect(connection: Connection) {
-        if(!connection.running) {
-            connection.connect(getApplication())
-        }
+
     }
 }
 
